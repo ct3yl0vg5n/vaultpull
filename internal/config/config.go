@@ -2,32 +2,35 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
-	"github.com/your-org/vaultpull/internal/filter"
+	"github.com/user/vaultpull/internal/template"
 )
 
 // Config holds all runtime configuration for vaultpull.
 type Config struct {
 	VaultAddr  string
 	VaultToken string
-	MountPath  string
+	Mount      string
 	SecretPath string
 	EnvFile    string
-	DryRun     bool
-	Filter     filter.Rule
+	AuditLog   string
+	Template   template.Rule
 }
 
-// FromEnv builds a Config from environment variables.
+// FromEnv reads configuration from environment variables.
 func FromEnv() (*Config, error) {
 	addr := os.Getenv("VAULT_ADDR")
 	if addr == "" {
-		return nil, errors.New("VAULT_ADDR is required")
+		return nil, errors.New("config: VAULT_ADDR is required")
 	}
+	addr = strings.TrimRight(addr, "/")
+
 	token := os.Getenv("VAULT_TOKEN")
 	if token == "" {
-		return nil, errors.New("VAULT_TOKEN is required")
+		return nil, errors.New("config: VAULT_TOKEN is required")
 	}
 
 	mount := os.Getenv("VAULT_MOUNT")
@@ -40,26 +43,24 @@ func FromEnv() (*Config, error) {
 		envFile = ".env"
 	}
 
-	excludeRaw := os.Getenv("VAULTPULL_EXCLUDE")
-	var excludeKeys []string
-	if excludeRaw != "" {
-		for _, k := range strings.Split(excludeRaw, ",") {
-			if trimmed := strings.TrimSpace(k); trimmed != "" {
-				excludeKeys = append(excludeKeys, trimmed)
-			}
-		}
+	prefix := os.Getenv("VAULTPULL_KEY_PREFIX")
+	upper := strings.EqualFold(os.Getenv("VAULTPULL_KEY_UPPER"), "true")
+
+	path := os.Getenv("VAULT_SECRET_PATH")
+	if path == "" {
+		return nil, fmt.Errorf("config: VAULT_SECRET_PATH is required")
 	}
 
 	return &Config{
-		VaultAddr:  strings.TrimRight(addr, "/"),
+		VaultAddr:  addr,
 		VaultToken: token,
-		MountPath:  mount,
-		SecretPath: os.Getenv("VAULT_SECRET_PATH"),
+		Mount:      mount,
+		SecretPath: path,
 		EnvFile:    envFile,
-		Filter: filter.Rule{
-			Prefix:      os.Getenv("VAULTPULL_PREFIX"),
-			Exclude:     excludeKeys,
-			StripPrefix: os.Getenv("VAULTPULL_STRIP_PREFIX") == "true",
+		AuditLog:   os.Getenv("VAULTPULL_AUDIT_LOG"),
+		Template: template.Rule{
+			Prefix: prefix,
+			Upper:  upper,
 		},
 	}, nil
 }
