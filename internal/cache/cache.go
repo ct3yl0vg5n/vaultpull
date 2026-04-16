@@ -22,6 +22,11 @@ func (e *Entry) IsExpired() bool {
 	return time.Since(e.FetchedAt) > e.TTL
 }
 
+// ExpiresAt returns the absolute time when the cache entry expires.
+func (e *Entry) ExpiresAt() time.Time {
+	return e.FetchedAt.Add(e.TTL)
+}
+
 // Store writes an entry to the given file path as JSON.
 func Store(path string, secrets map[string]string, ttl time.Duration) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
