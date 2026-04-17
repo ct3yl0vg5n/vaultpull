@@ -56,6 +56,15 @@ var cacheStatusCmd = &cobra.Command{
 	},
 }
 
+// resolveCachePath returns the provided path if non-empty, otherwise falls back
+// to the default cache path defined by cache.DefaultOptions.
+func resolveCachePath(p string) string {
+	if p != "" {
+		return p
+	}
+	return cache.DefaultOptions().Path
+}
+
 func init() {
 	cacheCmd.PersistentFlags().StringVar(&cachePath, "cache-path", "", "path to cache file")
 	cacheCmd.AddCommand(cacheInvalidateCmd)
