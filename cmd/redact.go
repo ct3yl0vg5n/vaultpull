@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/spf13/cobra"
 
@@ -32,11 +33,22 @@ var redactCmd = &cobra.Command{
 		}
 
 		redacted := secret.RedactMap(secrets, opts)
-		for k, v := range redacted {
-			fmt.Fprintf(os.Stdout, "%s=%s\n", k, v)
-		}
+		printRedacted(redacted)
 		return nil
 	},
+}
+
+// printRedacted writes redacted key=value pairs to stdout in sorted order
+// so that output is deterministic regardless of map iteration order.
+func printRedacted(redacted map[string]string) {
+	keys := make([]string, 0, len(redacted))
+	for k := range redacted {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Fprintf(os.Stdout, "%s=%s\n", k, redacted[k])
+	}
 }
 
 func init() {
