@@ -80,3 +80,17 @@ func TestFormatSnapshotSummary_NoLabel(t *testing.T) {
 		t.Error("expected non-empty summary")
 	}
 }
+
+func TestSaveSnapshot_CreatesFileWithRestrictedPermissions(t *testing.T) {
+	path := tempSnapshotPath(t)
+	if err := SaveSnapshot(path, "perm-test", map[string]string{"K": "v"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("could not stat snapshot file: %v", err)
+	}
+	if perm := info.Mode().Perm(); perm != 0600 {
+		t.Errorf("expected file permissions 0600, got %04o", perm)
+	}
+}
