@@ -78,6 +78,14 @@ func TestPolicyCmd_MissingFile(t *testing.T) {
 	}
 }
 
+func TestPolicyCmd_CustomDenyValue(t *testing.T) {
+	p := writePolicyEnvFile(t, "API_TOKEN=changeme\n")
+	out, _ := runPolicyCmd([]string{"--file", p, "--deny-value", "changeme"})
+	if !strings.Contains(out, "violation") {
+		t.Errorf("expected violation for custom deny-value, got: %s", out)
+	}
+}
+
 func resetPolicyCmd() {
 	policyCmd = &cobra.Command{
 		Use:   "policy",
